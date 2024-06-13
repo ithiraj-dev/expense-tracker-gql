@@ -5,9 +5,10 @@ import User from "../models/user.model.js";
 
 const userResolver = {
   Query: {
-    authUser: async () => {
+    authUser: async (_, args, context) => {
       try {
         const user = await context.getUser();
+        console.log(user)
         return user;
       } catch (error) {
         console.error("Error in authUser: ", error);
@@ -33,13 +34,13 @@ const userResolver = {
           throw new Error("All fields are required");
         }
 
-        const existingUser = User.findOne({ username });
+        const existingUser = await User.findOne({ username });
 
         if (existingUser) {
           throw new Error("User already exists");
         }
 
-        const slat = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const boyProfilePic = `https:://avatar.iran.liara.run/public/boy?username=${username}`;
@@ -80,15 +81,15 @@ const userResolver = {
         throw new Error(error.message || "Internal server error");
       }
     },
-    logout: async (_, _, context) => {
+    logout: async (_, args, context) => {
       try {
         await context.logout();
 
-        req.session.destroy((error) => {
+        context.req.session.destroy((error) => {
           if (error) throw new Error(error.message || "Internal server error");
         });
 
-        res.clearCookie("connect.sid");
+        context.res.clearCookie("connect.sid");
 
         return { message: "Logged out successfully" };
       } catch (error) {

@@ -36,13 +36,13 @@ store.on('error', (err) => console.log(err))
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store,
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-      httpOnly: true,
-    }
+		resave: false, // this option specifies whether to save the session to the store on every request
+		saveUninitialized: false, // option specifies whether to save uninitialized sessions
+		cookie: {
+			maxAge: 1000 * 60 * 60 * 24 * 7,
+			httpOnly: true, // this option prevents the Cross-Site Scripting (XSS) attacks
+		},
+		store: store,
   })
 )
 
@@ -61,22 +61,29 @@ await server.start();
 
 // Set up our Express middleware to handle CORS, body parsing,
 // and our expressMiddleware function.
+
+var corsOptions = {
+  origin: "http://localhost:3000",
+  credentials: true // <-- REQUIRED backend setting
+};
+app.use(cors(corsOptions));
+
 app.use(
-  '/',
-  cors({
-    origin: "*",
-    credentials: true
-  }),
-  express.json(),
-  // expressMiddleware accepts the same arguments:
-  // an Apollo Server instance and optional configuration options
-  expressMiddleware(server, {
-    context: async ({ req, res }) => buildContext({ req, res }),
-  }),
+	"/graphql",
+	cors({
+		origin: "http://localhost:3000",
+		credentials: true,
+	}),
+	express.json(),
+	// expressMiddleware accepts the same arguments:
+	// an Apollo Server instance and optional configuration options
+	expressMiddleware(server, {
+		context: async ({ req, res }) => buildContext({ req, res }),
+	})
 );
 
 // Modified server startup
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
 await connectDB();
 
-console.log(`🚀 Server ready at http://localhost:4000/`);
+console.log(`🚀 Server ready at http://localhost:4000/graphql`);

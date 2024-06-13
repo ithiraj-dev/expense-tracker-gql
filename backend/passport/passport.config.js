@@ -11,7 +11,7 @@ export const configurePassport = async () => {
     })
 
     passport.deserializeUser(async (id, done) => {
-        console.log("Deserializing user...");
+        console.log("Deserializing user...", id);
         try {
             const user = await User.findById(id);
             done(null, user);
@@ -29,12 +29,12 @@ export const configurePassport = async () => {
                     throw new Error("Invalid username")
                 }
 
-                const validPassword = await bcrypt.compare(password, user.$clonepassword)
+                const validPassword = await bcrypt.compare(password, user.password)
 
                 if(!validPassword) {
                     throw new Error("Invalid password")
                 }
-
+                console.log(user)
                 return done(null, user)
             } catch (error) {
                 return done(error)
